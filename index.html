@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnisight | Enterprise Observability</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #06b6d4;
+            --bg-dark: #020617;
+            --rail-width: 320px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Rail Layout */
+        .layout-grid {
+            display: grid;
+            grid-template-columns: var(--rail-width) 1fr;
+            min-height: 100vh;
+        }
+        
+        @media (max-width: 1024px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+            .rail {
+                display: none;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Utilities */
+        .text-glow {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-card {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(30, 41, 59, 0.1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px -10px rgba(6, 182, 212, 0.2);
+        }
+        
+        /* Animations */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout-grid">
+    
+    <!-- LEFT RAIL (Navigation & Status) -->
+    <aside class="rail h-screen sticky top-0 border-r border-slate-800 bg-slate-950 p-8 flex flex-col justify-between z-50">
+        <div>
+            <div class="flex items-center gap-3 mb-12">
+                <div class="w-4 h-4 bg-cyan-500 rounded-full animate-pulse"></div>
+                <span class="font-mono font-bold text-xl tracking-tight text-white">OMNISIGHT</span>
+            </div>
+
+            <nav class="space-y-6">
+                <a href="#hero" class="nav-link block text-sm font-mono text-cyan-400 opacity-100 transition-all">01_INITIALIZE</a>
+                <a href="#value" class="nav-link block text-sm font-mono text-slate-500 hover:text-white transition-all">02_ANALYSIS</a>
+                <a href="#how-it-works" class="nav-link block text-sm font-mono text-slate-500 hover:text-white transition-all">03_PIPELINE</a>
+                <a href="#features" class="nav-link block text-sm font-mono text-slate-500 hover:text-white transition-all">04_MODULES</a>
+                <a href="#proof" class="nav-link block text-sm font-mono text-slate-500 hover:text-white transition-all">05_VERIFICATION</a>
+                <a href="#cta" class="nav-link block text-sm font-mono text-slate-500 hover:text-white transition-all">06_EXECUTE</a>
+            </nav>
+        </div>
+
+        <div class="glass-panel p-4 rounded text-xs font-mono text-slate-400">
+            <div class="mb-2 text-slate-600 uppercase tracking-wider">System Log</div>
+            <div id="terminal-output" class="h-32 overflow-hidden flex flex-col justify-end">
+                <p>> System ready.</p>
+            </div>
+            <span class="inline-block w-2 h-4 bg-cyan-500 align-middle ml-1 cursor-blink"></span>
+        </div>
+    </aside>
+
+    <!-- MOBILE HEADER (Visible only < 1024px) -->
+    <div class="lg:hidden fixed top-0 w-full bg-slate-950/90 backdrop-blur-md z-50 border-b border-slate-800 p-4 flex justify-between items-center">
+        <span class="font-mono font-bold text-xl text-white">OMNISIGHT</span>
+        <button class="text-cyan-500 font-mono text-sm border border-cyan-500/30 px-3 py-1 rounded">MENU</button>
+    </div>
+
+    <!-- MAIN SCROLLABLE AREA -->
+    <main class="relative">
+
+        <!-- 1. HERO -->
+        <section id="hero" class="min-h-screen flex flex-col justify-center px-6 lg:px-20 py-24 relative overflow-hidden">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2670&auto=format&fit=crop" alt="Cybersecurity abstract" class="w-full h-full object-cover opacity-20 mix-blend-screen">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent"></div>
+            </div>
+
+            <div class="relative z-10 max-w-4xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 font-mono text-xs mb-8 fade-in-up">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                    </span>
+                    V2.4 LIVE RELEASE
+                </div>
+                
+                <h1 class="text-6xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 fade-in-up" style="transition-delay: 100ms;">
+                    TOTAL <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-500 text-glow">VISIBILITY</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-xl leading-relaxed mb-10 fade-in-up" style="transition-delay: 200ms;">
+                    Eliminate the guesswork. Real-time full-stack observability for enterprise infrastructure. Ingest logs, metrics, and traces with zero latency.
+                </p>
+
+                <div class="flex flex-wrap gap-4 fade-in-up" style="transition-delay: 300ms;">
+                    <a href="#cta" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-8 py-4 rounded transition-colors flex items-center gap-2">
+                        Start Inspection
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    </a>
+                    <button class="px-8 py-4 rounded border border-slate-700 text-white font-mono hover:bg-slate-800 transition-colors">
+                        $ npm install omnisight
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. VALUE PROPOSITION -->
+        <section id="value" class="py-32 px-6 lg:px-20 bg-slate-950 border-t border-slate-900">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                <div class="fade-in-up">
+                    <h2 class="text-4xl font-bold mb-6">Stop debugging in the dark.</h2>
+                    <p class="text-slate-400 text-lg mb-8">
+                        Traditional monitoring tools sample data. We don't. Omnisight captures 100% of your events, allowing you to trace standard outliers and black swan events with absolute precision.
+                    </p>
+                    <ul class="space-y-4 font-mono text-sm text-cyan-400">
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            infinite_cardinality_support
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            sub_millisecond_query_speed
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            predictive_anomaly_detection
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 fade-in-up" style="transition-delay: 200ms;">
+                    <div class="glass-card p-6 rounded-lg">
+                        <div class="text-4xl font-mono font-bold text-white mb-2">99.99%</div>
+                        <div class="text-sm text-slate-500 uppercase tracking-widest">Uptime Guarantee</div>
+                    </div>
+                    <div class="glass-card p-6 rounded-lg">
+                        <div class="text-4xl font-mono font-bold text-emerald-400 mb-2">&lt;10ms</div>
+                        <div class="text-sm text-slate-500 uppercase tracking-widest">Query Latency</div>
+                    </div>
+                    <div class="glass-card p-6 rounded-lg col-span-2">
+                        <div class="text-4xl font-mono font-bold text-purple-400 mb-2">50PB+</div>
+                        <div class="text-sm text-slate-500 uppercase tracking-widest">Daily Data Ingested</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. HOW IT WORKS -->
+        <section id="how-it-works" class="py-32 px-6 lg:px-20 relative">
+             <!-- Decoration -->
+             <div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+                 <img src="https://images.unsplash.com/photo-1544197150-b99a580bbcbf?q=80&w=2671&auto=format&fit=crop" alt="Data pipeline" class="w-full h-full object-cover mix-blend-luminosity">
+             </div>
+
+            <div class="relative z-10">
+                <h2 class="text-sm font-mono text-cyan-500 mb-4">/// ARCHITECTURE PIPELINE</h2>
+                <h3 class="text-5xl font-bold text-white mb-16 max-w-2xl">From chaos to clarity in three steps.</h3>
+
+                <div class="space-y-8 border-l border-slate-800 ml-4">
+                    
+                    <div class="relative pl-12 py-4 group fade-in-up">
+                        <span class="absolute -left-[9px] top-8 w-4 h-4 rounded-full bg-slate-800 border-2 border-slate-600 group-hover:border-cyan-500 group-hover:bg-cyan-500 transition-colors"></span>
+                        <h4 class="text-2xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">1. Ingest</h4>
+                        <p class="text-slate-400 max-w-lg">Deploy our lightweight agents or connect via OpenTelemetry. We support AWS, GCP, Azure, and on-premise bare metal seamlessly.</p>
+                    </div>
+
+                    <div class="relative pl-12 py-4 group fade-in-up" style="transition-delay: 100ms;">
+                        <span class="absolute -left-[9px] top-8 w-4 h-4 rounded-full bg-slate-800 border-2 border-slate-600 group-hover:border-purple-500 group-hover:bg-purple-500 transition-colors"></span>
+                        <h4 class="text-2xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">2. Index</h4>
+                        <p class="text-slate-400 max-w-lg">Data is indexed in real-time using our proprietary columnar store, enabling blazing fast aggregation without pre-defined schemas.</p>
+                    </div>
+
+                    <div class="relative pl-12 py-4 group fade-in-up" style="transition-delay: 200ms;">
+                        <span class="absolute -left-[9px] top-8 w-4 h-4 rounded-full bg-slate-800 border-2 border-slate-600 group-hover:border-emerald-500 group-hover:bg-emerald-500 transition-colors"></span>
+                        <h4 class="text-2xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">3. Visualize</h4>
+                        <p class="text-slate-400 max-w-lg">Build dashboards in seconds. Set alerts based on complex anomalies, not just static thresholds.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. KEY FEATURES -->
+        <section id="features" class="py-32 px-6 lg:px-20 bg-slate-900/50">
+            <div class="mb-16 flex items-end justify-between">
+                <div>
+                    <h2 class="text-sm font-mono text-cyan-500 mb-4">/// MODULES</h2>
+                    <h3 class="text-4xl font-bold text-white">Complete Infrastructure Control</h3>
+                </div>
+                <a href="#" class="hidden md:block text-slate-400 hover:text-white font-mono text-sm underline">View Documentation -></a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-card p-8 rounded-xl group fade-in-up">
+                    <div class="w-12 h-12 bg-blue-500/10 rounded flex items-center justify-center mb-6 text-blue-400 group-hover:text-white group-hover:bg-blue-500 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Live Metrics</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">Streaming metrics with 1-second granularity. Watch your CPU, memory, and I/O paint the screen in real-time.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card p-8 rounded-xl group fade-in-up" style="transition-delay: 100ms;">
+                    <div class="w-12 h-12 bg-purple-500/10 rounded flex items-center justify-center mb-6 text-purple-400 group-hover:text-white group-hover:bg-purple-500 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Distributed Tracing</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">Visualize the entire request lifecycle across microservices. Pinpoint exactly where the bottleneck lives.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-8 rounded-xl group fade-in-up" style="transition-delay: 200ms;">
+                    <div class="w-12 h-12 bg-emerald-500/10 rounded flex items-center justify-center mb-6 text-emerald-400 group-hover:text-white group-hover:bg-emerald-500 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Compliance Ready</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">Built for the enterprise. SOC2 Type II certified, GDPR compliant, and full audit logs included out of the box.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. PROOF -->
+        <section id="proof" class="py-24 px-6 lg:px-20 border-y border-slate-900">
+            <div class="text-center mb-12">
+                <p class="text-slate-500 font-mono text-sm">TRUSTED BY ENGINEERING TEAMS AT</p>
+            </div>
+            
+            <div class="flex flex-wrap justify-center items-center gap-12 lg:gap-20 opacity-70 grayscale hover:grayscale-0 transition-all duration-500">
+                <!-- Logo placeholders using text for simplicity but styled heavily -->
+                <span class="text-2xl font-black text-white tracking-tighter">ACME<span class="font-light">CORP</span></span>
+                <span class="text-2xl font-bold text-white tracking-widest">VORTEX</span>
+                <span class="text-2xl font-bold text-white italic">Stratos</span>
+                <span class="text-2xl font-black text-white">Hyper<span class="text-cyan-500">Loop</span></span>
+                <span class="text-2xl font-bold text-white font-mono">{CODE_BASE}</span>
+            </div>
+
+            <div class="mt-20 flex flex-col lg:flex-row gap-8 justify-center items-center">
+                <div class="flex items-center gap-4 bg-slate-900 p-4 rounded-lg border border-slate-800">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-slate-900 font-bold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div>
+                        <div class="text-white font-bold">SOC2 Type II</div>
+                        <div class="text-xs text-slate-500">Certified</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-slate-900 p-4 rounded-lg border border-slate-800">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-slate-900 font-bold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="text-white font-bold">GDPR Ready</div>
+                        <div class="text-xs text-slate-500">Compliant</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. PRIMARY CTA -->
+        <section id="cta" class="py-40 px-6 lg:px-20 relative overflow-hidden">
+             <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1614064641938-3bcee52970f4?q=80&w=2670&auto=format&fit=crop" alt="Server lights" class="w-full h-full object-cover opacity-10 mix-blend-overlay">
+                <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-transparent to-slate-950"></div>
+            </div>
+
+            <div class="relative z-10 max-w-3xl mx-auto text-center">
+                <h2 class="text-5xl lg:text-7xl font-bold text-white mb-8 tracking-tight">Ready to see <br>the full picture?</h2>
+                <p class="text-xl text-slate-400 mb-12">
+                    Deploy Omnisight in your environment today. 14-day full access trial. No credit card required.
+                </p>
+                
+                <div class="bg-slate-900 p-2 rounded-lg inline-flex flex-col md:flex-row items-center border border-slate-700 shadow-2xl max-w-lg w-full">
+                    <div class="flex-1 w-full">
+                         <input type="email" placeholder="engineer@company.com" class="w-full bg-transparent border-none text-white px-4 py-3 focus:ring-0 placeholder-slate-500 font-mono">
+                    </div>
+                    <button class="w-full md:w-auto bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-8 py-3 rounded shadow-lg transition-transform transform active:scale-95">
+                        Initialize Demo
+                    </button>
+                </div>
+                <p class="mt-6 text-xs text-slate-600 font-mono">By clicking above, you agree to our Terms of Service.</p>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="py-12 px-6 lg:px-20 border-t border-slate-900 text-center lg:text-left">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div class="col-span-1">
+                    <span class="font-mono font-bold text-xl text-white">OMNISIGHT</span>
+                    <p class="text-slate-500 text-sm mt-4">© 2024 Omnisight Inc.<br>All systems operational.</p>
+                </div>
+                <div class="col-span-3 flex justify-center lg:justify-end gap-8">
+                    <a href="#" class="text-slate-500 hover:text-cyan-400 transition-colors">Platform</a>
+                    <a href="#" class="text-slate-500 hover:text-cyan-400 transition-colors">Documentation</a>
+                    <a href="#" class="text-slate-500 hover:text-cyan-400 transition-colors">Security</a>
+                    <a href="#" class="text-slate-500 hover:text-cyan-400 transition-colors">Contact</a>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+</div>
+
+<script>
+    // SCROLL REVEAL LOGIC
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                
+                // Add log entry to sidebar
+                addLogEntry(entry.target.id || 'Section content');
+                
+                // Update Active Nav
+                updateActiveNav(entry.target.closest('section')?.id);
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in-up').forEach((el) => {
+        observer.observe(el);
+    });
+    
+    // SECTION OBSERVER FOR NAV HIGHLIGHTING
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                 updateActiveNav(entry.target.id);
+                 addLogEntry(`Viewing module: ${entry.target.id.toUpperCase()}`);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('section').forEach(sec => sectionObserver.observe(sec));
+
+    // SIDEBAR LOGIC
+    function updateActiveNav(id) {
+        if(!id) return;
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if(link.getAttribute('href') === '#' + id) {
+                link.classList.remove('text-slate-500');
+                link.classList.add('text-cyan-400', 'pl-2');
+            } else {
+                link.classList.add('text-slate-500');
+                link.classList.remove('text-cyan-400', 'pl-2');
+            }
+        });
+    }
+
+    const logContainer = document.getElementById('terminal-output');
+    function addLogEntry(text) {
+        const p = document.createElement('p');
+        const time = new Date().toISOString().split('T')[1].split('.')[0];
+        p.innerHTML = `<span class="text-slate-600">[${time}]</span> ${text}`;
+        logContainer.appendChild(p);
+        if(logContainer.children.length > 5) {
+            logContainer.removeChild(logContainer.firstChild);
+        }
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // Initial Log
+    setTimeout(() => addLogEntry('Initializing UI components...'), 500);
+    setTimeout(() => addLogEntry('Connecting to stream...'), 1200);
+    setTimeout(() => addLogEntry('Connection established (12ms).'), 2000);
+
+</script>
+
+
+<script>
+  let inspectorMode = false;
+  let hoveredElement = null;
+  let selectedElement = null;
+  
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'SET_INSPECTOR_MODE') {
+      inspectorMode = event.data.enabled;
+      document.body.style.cursor = inspectorMode ? 'crosshair' : 'default';
+    }
+    
+    if (event.data?.type === 'LOCAL_UPDATE' && selectedElement) {
+      const update = event.data.update;
+      
+      if (update.text !== undefined) {
+        selectedElement.innerText = update.text;
+      }
+      
+      if (update.styles) {
+        Object.entries(update.styles).forEach(([prop, value]) => {
+          selectedElement.style[prop] = value;
+        });
+      }
+    }
+  });
+  
+  document.addEventListener('mouseover', (e) => {
+    if (!inspectorMode) return;
+    if (hoveredElement && hoveredElement !== selectedElement) {
+      hoveredElement.style.outline = '';
+    }
+    hoveredElement = e.target;
+    if (hoveredElement !== selectedElement) {
+      hoveredElement.style.outline = '2px solid #06b6d4';
+    }
+  });
+  
+  document.addEventListener('mouseout', (e) => {
+    if (!inspectorMode || !hoveredElement) return;
+    if (hoveredElement !== selectedElement) {
+      hoveredElement.style.outline = '';
+    }
+  });
+  
+  document.addEventListener('click', (e) => {
+    if (!inspectorMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (selectedElement) {
+      selectedElement.style.outline = '';
+    }
+    
+    const el = e.target;
+    selectedElement = el;
+    el.style.outline = '3px solid #06b6d4';
+    
+    const rect = el.getBoundingClientRect();
+    const styles = window.getComputedStyle(el);
+    
+    window.parent.postMessage({
+      type: 'ELEMENT_SELECTED',
+      element: {
+        tagName: el.tagName.toLowerCase(),
+        text: el.innerText?.substring(0, 500) || '',
+        className: el.className || '',
+        styles: {
+          color: styles.color,
+          backgroundColor: styles.backgroundColor,
+          fontSize: styles.fontSize,
+          fontWeight: styles.fontWeight,
+          padding: styles.padding,
+          margin: styles.margin,
+        },
+        rect: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        },
+        selector: el.id ? '#' + el.id : (el.className ? '.' + el.className.split(' ')[0] : el.tagName.toLowerCase())
+      }
+    }, '*');
+  }, true);
+</script>
+</body>
+</html>
